@@ -38,6 +38,7 @@ export async function analyzeTranscript(params: {
 export async function runComplianceAudit(params: {
   provider?: string;
   api_key?: string;
+  transcript?: string;
 }): Promise<AuditScorecardResponse> {
   const res = await fetch(`${API_BASE}/evaluate`, {
     method: 'POST',

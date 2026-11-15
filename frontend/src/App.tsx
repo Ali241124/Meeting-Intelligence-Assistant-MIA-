@@ -17,6 +17,8 @@ export const App: React.FC = () => {
   // Active result state
   const [activeResult, setActiveResult] = useState<MeetingAnalysisResult | null>(null);
   const [activeMetadata, setActiveMetadata] = useState<any>(null);
+  const [activeTranscript, setActiveTranscript] = useState<string>('');
+  const [activeTitle, setActiveTitle] = useState<string>('');
 
   // Session history (Screen 1 Requirement)
   const [recentAnalyses, setRecentAnalyses] = useState<SessionAnalysisRecord[]>(() => {
@@ -63,6 +65,8 @@ export const App: React.FC = () => {
   const handleAnalysisSuccess = (res: AnalyzeResponse, rawInput: { title?: string; transcript: string }) => {
     setActiveResult(res.data);
     setActiveMetadata(res.metadata);
+    setActiveTranscript(rawInput.transcript);
+    setActiveTitle(res.data.meeting_title || rawInput.title || 'Untitled Meeting');
 
     // Save record to session history
     const newRecord: SessionAnalysisRecord = {
@@ -81,6 +85,8 @@ export const App: React.FC = () => {
   const handleOpenRecent = (record: SessionAnalysisRecord) => {
     setActiveResult(record.data);
     setActiveMetadata(record.metadata);
+    setActiveTranscript(''); // Transcript not stored in history for space
+    setActiveTitle(record.title);
     setCurrentView('results');
   };
 
@@ -151,6 +157,8 @@ export const App: React.FC = () => {
         onClose={() => setIsAuditOpen(false)}
         provider={provider}
         apiKey={apiKey}
+        currentTranscript={activeTranscript}
+        currentTitle={activeTitle}
       />
 
       {/* Settings Modal */}

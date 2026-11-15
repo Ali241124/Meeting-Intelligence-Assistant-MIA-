@@ -8,6 +8,8 @@ interface ScorecardModalProps {
   onClose: () => void;
   provider: string;
   apiKey: string;
+  currentTranscript?: string;
+  currentTitle?: string;
 }
 
 export const ScorecardModal: React.FC<ScorecardModalProps> = ({
@@ -15,6 +17,8 @@ export const ScorecardModal: React.FC<ScorecardModalProps> = ({
   onClose,
   provider,
   apiKey,
+  currentTranscript,
+  currentTitle,
 }) => {
   const [auditData, setAuditData] = useState<AuditScorecardResponse | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -26,7 +30,11 @@ export const ScorecardModal: React.FC<ScorecardModalProps> = ({
     setIsRunning(true);
     setErrorMsg(null);
     try {
-      const data = await runComplianceAudit({ provider, api_key: apiKey });
+      const data = await runComplianceAudit({ 
+        provider, 
+        api_key: apiKey,
+        transcript: currentTranscript 
+      });
       setAuditData(data);
     } catch (err: any) {
       setErrorMsg(err.message || 'Audit failed');
@@ -65,16 +73,20 @@ export const ScorecardModal: React.FC<ScorecardModalProps> = ({
             <div className="p-8 text-center space-y-4">
               <ShieldCheck className="w-12 h-12 text-emerald-400 mx-auto" />
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-white">Evaluate Prompt Quality Across 5 Meetings</h3>
+                <h3 className="text-sm font-bold text-white">
+                  {currentTranscript ? 'Audit Current Meeting' : 'Evaluate Prompt Quality Across 5 Meetings'}
+                </h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Tests grounding, null safety, decision vs proposal classification, conflicting delivery dates, and adversarial prompt-injection immunity.
+                  {currentTranscript 
+                    ? `Run quality checks on "${currentTitle || 'Current Meeting'}" to verify grounding, null safety, and evidence requirements.`
+                    : 'Tests grounding, null safety, decision vs proposal classification, conflicting delivery dates, and adversarial prompt-injection immunity.'}
                 </p>
               </div>
               <button
                 onClick={handleRunAudit}
                 className="px-6 py-2.5 rounded-xl bg-brand-emerald hover:bg-emerald-600 text-white font-semibold text-xs transition-colors shadow-md shadow-emerald-950"
               >
-                Start Automated Audit
+                {currentTranscript ? 'Audit Current Meeting' : 'Start Automated Audit'}
               </button>
             </div>
           )}
@@ -83,7 +95,7 @@ export const ScorecardModal: React.FC<ScorecardModalProps> = ({
             <div className="p-12 text-center space-y-4">
               <div className="w-8 h-8 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin mx-auto" />
               <div className="text-xs text-slate-300 font-medium">
-                Running regression checks across all 5 scenarios...
+                {currentTranscript ? 'Running quality checks on current meeting...' : 'Running regression checks across all 5 scenarios...'}
               </div>
             </div>
           )}

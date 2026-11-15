@@ -124,14 +124,94 @@ def analyze(req: AnalyzeRequest):
 class EvaluateRequest(BaseModel):
     prompt_version: Optional[str] = "v2"
     api_key: Optional[str] = None
+    transcript: Optional[str] = None  # For custom meeting audit
 
 
 @app.post("/api/evaluate", tags=["Evaluation"])
 def run_evaluation(req: EvaluateRequest):
     """
     Run all five evaluation scenarios against the reviewer scorecard rules.
+    If transcript is provided, run single custom meeting audit instead.
     Returns pass/fail checklist per scenario and an overall compliance score.
     """
+    # Custom transcript audit mode
+    if req.transcript:
+        try:
+            validated, meta = analyze_meeting(
+                transcript=req.transcript,
+                provider="groq",
+                api_key=req.api_key,
+                prompt_version=req.prompt_version or "v2",
+            )
+            data = validated.model_dump()
+            
+            # Generic quality checks for any meeting
+            checks = []
+            
+            # Check 1: Evidence for all items
+            all_items = data["decisions"] + data["action_items"] + data["risks"] + data["open_questions"] + data["ambiguities"]
+            evidence_ok = all(bool(item.get("evidence", "").strip()) for item in all_items) if all_items else True
+            checks.append({"name": "Every extracted item has evidence", "passed": evidence_ok, "detail": ""})
+            
+            # Check 2: Null preservation
+            null_check = any(
+                a.get("owner") is None or a.get("deadline") is None
+                for a in data["action_items"]
+            ) if data["action_items"] else True
+            checks.append({"name": "Null values preserved for missing fields", "passed": null_check, "detail": ""})
+            
+            # Check 3: Valid JSON structure
+            checks.append({"name": "Valid JSON structure returned", "passed": True, "detail": ""})
+            
+            # Check 4: No empty strings where null should be
+            no_empty_strings = not any(
+                a.get("owner") == "" or a.get("deadline") == ""
+                for a in data["action_items"]
+            )
+            checks.append({"name": "No empty strings in place of null", "passed": no_empty_strings, "detail": ""})
+            
+            passed = sum(1 for c in checks if c["passed"])
+            total = len(checks)
+            
+            return {
+                "prompt_version": req.prompt_version,
+                "overall_score": round(passed / total * 100, 1),
+                "scenarios_evaluated": 1,
+                "results": [{
+                    "scenario_id": 0,
+                    "scenario_title": "Custom Meeting Audit",
+                    "category": "Custom",
+                    "passed_checks": passed,
+                    "total_checks": total,
+                    "score_percent": round(passed / total * 100, 1),
+                    "checks": checks,
+                    "extraction_summary": {
+                        "decisions": len(data["decisions"]),
+                        "action_items": len(data["action_items"]),
+                        "risks": len(data["risks"]),
+                        "open_questions": len(data["open_questions"]),
+                        "ambiguities": len(data["ambiguities"]),
+                    },
+                }],
+            }
+        except Exception as exc:
+            return {
+                "prompt_version": req.prompt_version,
+                "overall_score": 0.0,
+                "scenarios_evaluated": 1,
+                "results": [{
+                    "scenario_id": 0,
+                    "scenario_title": "Custom Meeting Audit",
+                    "category": "Custom",
+                    "error": str(exc),
+                    "passed_checks": 0,
+                    "total_checks": 1,
+                    "score_percent": 0.0,
+                    "checks": [{"name": "No exception during extraction", "passed": False, "detail": str(exc)}],
+                }],
+            }
+    
+    # Standard 5-scenario evaluation mode
     scorecard_results = []
 
     for scenario in SCENARIOS:

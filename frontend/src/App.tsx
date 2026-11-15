@@ -137,6 +137,7 @@ export const App: React.FC = () => {
               metadata={activeMetadata || { mode: 'processed' }}
               onUpdateData={setActiveResult}
               onBackToNew={() => setCurrentView('new-analysis')}
+              transcript={activeTranscript}
             />
           )}
 

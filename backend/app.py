@@ -2,6 +2,7 @@
 Meeting Intelligence Assistant — FastAPI Backend
 """
 import os
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -14,6 +15,22 @@ from pydantic import BaseModel
 from .schemas import AnalyzeRequest, MeetingExtractionResponse
 from .scenarios import SCENARIOS
 from .extractor import analyze_meeting, load_prompt
+
+# Custom scenarios storage
+CUSTOM_SCENARIOS_FILE = Path(__file__).parent.parent / "custom_scenarios.json"
+
+def load_custom_scenarios():
+    if CUSTOM_SCENARIOS_FILE.exists():
+        try:
+            with open(CUSTOM_SCENARIOS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_custom_scenarios(scenarios):
+    with open(CUSTOM_SCENARIOS_FILE, 'w') as f:
+        json.dump(scenarios, f, indent=2)
 
 # ──────────────────────────────────────────────
 app = FastAPI(
@@ -56,17 +73,47 @@ def health_check():
 # ──────────────────────────────────────────────
 @app.get("/api/scenarios", tags=["Scenarios"])
 def get_scenarios():
-    """Return all five evaluation scenarios (title, description, transcript)."""
-    return SCENARIOS
+    """Return all evaluation scenarios (built-in + custom)."""
+    custom = load_custom_scenarios()
+    return SCENARIOS + custom
 
 
 @app.get("/api/scenarios/{scenario_id}", tags=["Scenarios"])
 def get_scenario(scenario_id: int):
-    """Return a single scenario by id (1-5)."""
-    for s in SCENARIOS:
+    """Return a single scenario by id (1-5 for built-in, 100+ for custom)."""
+    all_scenarios = SCENARIOS + load_custom_scenarios()
+    for s in all_scenarios:
         if s["id"] == scenario_id:
             return s
     raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found.")
+
+
+class SaveScenarioRequest(BaseModel):
+    title: str
+    transcript: str
+    category: str = "Custom"
+    description: str = ""
+    participants: Optional[List[str]] = None
+
+
+@app.post("/api/scenarios", tags=["Scenarios"])
+def save_scenario(req: SaveScenarioRequest):
+    """Save a custom scenario for later testing."""
+    custom = load_custom_scenarios()
+    new_id = max([s["id"] for s in custom], default=99) + 1
+    new_scenario = {
+        "id": new_id,
+        "title": req.title,
+        "category": req.category,
+        "description": req.description or "Custom user scenario",
+        "participants": req.participants or [],
+        "expected_focus": [],
+        "traps": "",
+        "transcript": req.transcript,
+    }
+    custom.append(new_scenario)
+    save_custom_scenarios(custom)
+    return new_scenario
 
 
 # ──────────────────────────────────────────────

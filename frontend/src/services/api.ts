@@ -55,3 +55,19 @@ export async function getSystemPrompt(): Promise<string> {
   const data = await res.json();
   return data.prompt;
 }
+
+export async function saveScenario(params: {
+  title: string;
+  transcript: string;
+  category?: string;
+  description?: string;
+  participants?: string[];
+}): Promise<any> {
+  const res = await fetch(`${API_BASE}/scenarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) throw new Error('Failed to save scenario');
+  return res.json();
+}

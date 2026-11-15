@@ -17,15 +17,18 @@ import {
   Check,
   Calendar,
   User,
-  Trash2
+  Trash2,
+  Save
 } from 'lucide-react';
 import { MeetingAnalysisResult, AnalysisMetadata, ActionItem } from '../types';
+import { saveScenario } from '../services/api';
 
 interface ResultsWorkspaceProps {
   data: MeetingAnalysisResult;
   metadata: AnalysisMetadata;
   onUpdateData: (newData: MeetingAnalysisResult) => void;
   onBackToNew: () => void;
+  transcript?: string;
 }
 
 export const ResultsWorkspace: React.FC<ResultsWorkspaceProps> = ({
@@ -33,6 +36,7 @@ export const ResultsWorkspace: React.FC<ResultsWorkspaceProps> = ({
   metadata,
   onUpdateData,
   onBackToNew,
+  transcript,
 }) => {
   // Screen 4: Two editing modes (Visual Editor vs JSON Editor)
   const [editorMode, setEditorMode] = useState<'visual' | 'json'>('visual');
@@ -142,6 +146,24 @@ export const ResultsWorkspace: React.FC<ResultsWorkspaceProps> = ({
     setTimeout(() => setCopiedNotification(false), 2000);
   };
 
+  const handleSaveAsScenario = async () => {
+    if (!transcript) {
+      alert('Cannot save as scenario: original transcript not available');
+      return;
+    }
+    try {
+      await saveScenario({
+        title: data.meeting_title || 'Custom Scenario',
+        transcript: transcript,
+        category: 'Custom',
+        description: 'User-created test scenario',
+      });
+      alert('Scenario saved successfully! It will appear in the Scenarios view.');
+    } catch (err: any) {
+      alert(`Failed to save scenario: ${err.message}`);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-6 space-y-6">
       {/* Top Banner & Header */}
@@ -198,6 +220,16 @@ export const ResultsWorkspace: React.FC<ResultsWorkspaceProps> = ({
           <div className="h-6 w-px bg-charcoal-800 mx-1 hidden sm:block" />
 
           {/* Export Actions (Screen 5) */}
+          {transcript && (
+            <button
+              onClick={handleSaveAsScenario}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 hover:bg-charcoal-700 text-xs font-semibold text-white border border-charcoal-700 transition-colors"
+              title="Save as test scenario"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save as Scenario</span>
+            </button>
+          )}
           <button
             onClick={handleCopyJson}
             className="px-3 py-2 rounded-lg bg-charcoal-800 hover:bg-charcoal-700 text-slate-200 text-xs font-medium border border-charcoal-700 flex items-center gap-1.5 transition-colors"

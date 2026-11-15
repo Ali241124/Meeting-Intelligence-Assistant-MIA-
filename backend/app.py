@@ -77,23 +77,6 @@ def health_check():
 # ──────────────────────────────────────────────
 # Scenarios
 # ──────────────────────────────────────────────
-@app.get("/api/scenarios", tags=["Scenarios"])
-def get_scenarios():
-    """Return all evaluation scenarios (built-in + custom)."""
-    custom = load_custom_scenarios()
-    return SCENARIOS + custom
-
-
-@app.get("/api/scenarios/{scenario_id}", tags=["Scenarios"])
-def get_scenario(scenario_id: int):
-    """Return a single scenario by id (1-5 for built-in, 100+ for custom)."""
-    all_scenarios = SCENARIOS + load_custom_scenarios()
-    for s in all_scenarios:
-        if s["id"] == scenario_id:
-            return s
-    raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found.")
-
-
 class SaveScenarioRequest(BaseModel):
     title: str
     transcript: str
@@ -123,6 +106,23 @@ def save_scenario(req: SaveScenarioRequest):
         return new_scenario
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/scenarios", tags=["Scenarios"])
+def get_scenarios():
+    """Return all evaluation scenarios (built-in + custom)."""
+    custom = load_custom_scenarios()
+    return SCENARIOS + custom
+
+
+@app.get("/api/scenarios/{scenario_id}", tags=["Scenarios"])
+def get_scenario(scenario_id: int):
+    """Return a single scenario by id (1-5 for built-in, 100+ for custom)."""
+    all_scenarios = SCENARIOS + load_custom_scenarios()
+    for s in all_scenarios:
+        if s["id"] == scenario_id:
+            return s
+    raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found.")
 
 
 # ──────────────────────────────────────────────

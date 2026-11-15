@@ -39,6 +39,9 @@ yarn-error.log*
 .env
 *.local
 
+# Custom user data
+custom_scenarios.json
+
 # IDE
 .vscode/
 .idea/

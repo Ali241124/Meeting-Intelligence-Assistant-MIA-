@@ -22,15 +22,21 @@ CUSTOM_SCENARIOS_FILE = Path(__file__).parent.parent / "custom_scenarios.json"
 def load_custom_scenarios():
     if CUSTOM_SCENARIOS_FILE.exists():
         try:
-            with open(CUSTOM_SCENARIOS_FILE, 'r') as f:
+            with open(CUSTOM_SCENARIOS_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except:
+        except Exception as e:
+            print(f"Error loading custom scenarios: {e}")
             return []
     return []
 
 def save_custom_scenarios(scenarios):
-    with open(CUSTOM_SCENARIOS_FILE, 'w') as f:
-        json.dump(scenarios, f, indent=2)
+    try:
+        CUSTOM_SCENARIOS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(CUSTOM_SCENARIOS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(scenarios, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving custom scenarios: {e}")
+        raise
 
 # ──────────────────────────────────────────────
 app = FastAPI(

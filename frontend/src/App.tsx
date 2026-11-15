@@ -147,6 +147,11 @@ export const App: React.FC = () => {
               onSelectScenario={() => {
                 setCurrentView('new-analysis');
               }}
+              onAuditScenario={(scenario) => {
+                setActiveTranscript(scenario.transcript);
+                setActiveTitle(scenario.title);
+                setIsAuditOpen(true);
+              }}
             />
           )}
         </main>

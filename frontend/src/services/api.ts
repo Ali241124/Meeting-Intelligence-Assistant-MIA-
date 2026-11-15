@@ -68,6 +68,9 @@ export async function saveScenario(params: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  if (!res.ok) throw new Error('Failed to save scenario');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Failed to save scenario' }));
+    throw new Error(err.detail || 'Failed to save scenario');
+  }
   return res.json();
 }

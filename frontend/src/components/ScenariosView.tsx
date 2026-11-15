@@ -1,15 +1,17 @@
 import React from 'react';
-import { FlaskConical, ArrowRight, Users } from 'lucide-react';
+import { FlaskConical, ArrowRight, Users, ShieldCheck } from 'lucide-react';
 import { Scenario } from '../types';
 
 interface ScenariosViewProps {
   scenarios: Scenario[];
   onSelectScenario: (scenario: Scenario) => void;
+  onAuditScenario?: (scenario: Scenario) => void;
 }
 
 export const ScenariosView: React.FC<ScenariosViewProps> = ({
   scenarios,
   onSelectScenario,
+  onAuditScenario,
 }) => {
   return (
     <div className="max-w-5xl mx-auto py-6 space-y-6">
@@ -45,7 +47,16 @@ export const ScenariosView: React.FC<ScenariosViewProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 border-t border-charcoal-800 flex justify-end">
+            <div className="pt-2 border-t border-charcoal-800 flex justify-end gap-2">
+              {onAuditScenario && (
+                <button
+                  onClick={() => onAuditScenario(sc)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/50 hover:bg-emerald-950 text-xs font-semibold text-emerald-400 border border-emerald-800/50 transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Audit</span>
+                </button>
+              )}
               <button
                 onClick={() => onSelectScenario(sc)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charcoal-800 hover:bg-charcoal-700 text-xs font-semibold text-white border border-charcoal-700 transition-colors"

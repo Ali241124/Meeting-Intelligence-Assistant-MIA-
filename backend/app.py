@@ -4,7 +4,7 @@ Meeting Intelligence Assistant — FastAPI Backend
 import os
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -105,21 +105,24 @@ class SaveScenarioRequest(BaseModel):
 @app.post("/api/scenarios", tags=["Scenarios"])
 def save_scenario(req: SaveScenarioRequest):
     """Save a custom scenario for later testing."""
-    custom = load_custom_scenarios()
-    new_id = max([s["id"] for s in custom], default=99) + 1
-    new_scenario = {
-        "id": new_id,
-        "title": req.title,
-        "category": req.category,
-        "description": req.description or "Custom user scenario",
-        "participants": req.participants or [],
-        "expected_focus": [],
-        "traps": "",
-        "transcript": req.transcript,
-    }
-    custom.append(new_scenario)
-    save_custom_scenarios(custom)
-    return new_scenario
+    try:
+        custom = load_custom_scenarios()
+        new_id = max([s["id"] for s in custom], default=99) + 1
+        new_scenario = {
+            "id": new_id,
+            "title": req.title,
+            "category": req.category,
+            "description": req.description or "Custom user scenario",
+            "participants": req.participants or [],
+            "expected_focus": [],
+            "traps": "",
+            "transcript": req.transcript,
+        }
+        custom.append(new_scenario)
+        save_custom_scenarios(custom)
+        return new_scenario
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ──────────────────────────────────────────────

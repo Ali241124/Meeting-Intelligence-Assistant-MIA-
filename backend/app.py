@@ -186,7 +186,7 @@ class EvaluateRequest(BaseModel):
 @app.post("/api/evaluate", tags=["Evaluation"])
 def run_evaluation(req: EvaluateRequest):
     """
-    Run all five evaluation scenarios against the reviewer scorecard rules.
+    Run all evaluation scenarios (built-in + custom) against the reviewer scorecard rules.
     If transcript is provided, run single custom meeting audit instead.
     Returns pass/fail checklist per scenario and an overall compliance score.
     """
@@ -267,10 +267,11 @@ def run_evaluation(req: EvaluateRequest):
                 }],
             }
     
-    # Standard 5-scenario evaluation mode
+    # Standard evaluation mode - run on all scenarios (built-in + custom)
     scorecard_results = []
+    all_scenarios = SCENARIOS + load_custom_scenarios()
 
-    for scenario in SCENARIOS:
+    for scenario in all_scenarios:
         try:
             validated, meta = analyze_meeting(
                 transcript=scenario["transcript"],
